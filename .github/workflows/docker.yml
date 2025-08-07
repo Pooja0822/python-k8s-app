@@ -32,9 +32,9 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         source: |
-          deployment.yml
-          service.yml
-        target: "~/python-k8s-app"
+          deployment.yaml
+          service.yaml
+        target: "~/k8s-manifests"
 
     - name: SSH into EC2 and deploy to Minikube
       uses: appleboy/ssh-action@v0.1.10
@@ -45,8 +45,9 @@ jobs:
         script: |
           kubectl delete deployment my-app --ignore-not-found
           kubectl delete service my-app-service --ignore-not-found
-          kubectl apply -f ~/deployment.yml
-          kubectl apply -f ~/service.yml
+          kubectl apply -f ~/k8s-manifests/deployment.yaml
+          kubectl apply -f ~/k8s-manifests/service.yaml
           kubectl rollout status deployment/my-app
           kubectl get svc my-app-service
+
 
