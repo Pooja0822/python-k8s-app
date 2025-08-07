@@ -32,8 +32,8 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         source: |
-          k8s/deployment.yml
-          k8s/service.yml
+          deployment.yml
+          service.yml
         target: "~/python-k8s-app"
 
     - name: SSH into EC2 and deploy to Minikube
@@ -45,8 +45,8 @@ jobs:
         script: |
           kubectl delete deployment my-app --ignore-not-found
           kubectl delete service my-app-service --ignore-not-found
-          kubectl apply -f ~/python-k8s-app/deployment.yml
-          kubectl apply -f ~/python-k8s-app/service.yml
+          kubectl apply -f ~/deployment.yml
+          kubectl apply -f ~/service.yml
           kubectl rollout status deployment/my-app
           kubectl get svc my-app-service
 
