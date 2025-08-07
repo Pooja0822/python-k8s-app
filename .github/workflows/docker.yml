@@ -25,6 +25,14 @@ jobs:
         push: true
         tags: pooja081/python-k8s-app:latest
 
+    - name: Ensure target directory exists on EC2
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: mkdir -p ~/k8s-manifests
+
     - name: Copy Kubernetes manifests to EC2
       uses: appleboy/scp-action@v0.1.4
       with:
@@ -43,11 +51,13 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
+          kubectl config use-context minikube
           kubectl delete deployment my-app --ignore-not-found
           kubectl delete service my-app-service --ignore-not-found
           kubectl apply -f ~/k8s-manifests/deployment.yaml
           kubectl apply -f ~/k8s-manifests/service.yaml
           kubectl rollout status deployment/my-app
           kubectl get svc my-app-service
+
 
 
