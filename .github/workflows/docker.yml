@@ -1,25 +1,52 @@
-name: Build and Push Docker Image
+name: Build and Deploy to Minikube
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          tags: pooja081/python-k8s-app:latest
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: pooja081/python-k8s-app:latest
+
+    - name: Copy Kubernetes manifests to EC2
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: |
+          k8s/deployment.yml
+          k8s/service.yml
+        target: "~/python-k8s-app"
+
+    - name: SSH into EC2 and deploy to Minikube
+      uses: appleboy/ssh-action@v0.1.10
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          kubectl delete deployment my-app --ignore-not-found
+          kubectl delete service my-app-service --ignore-not-found
+          kubectl apply -f ~/python-k8s-app/deployment.yml
+          kubectl apply -f ~/python-k8s-app/service.yml
+          kubectl rollout status deployment/my-app
+          kubectl get svc my-app-service
+
