@@ -16,4 +16,4 @@ spec:
       - name: my-app
         image: pooja081/python-k8s-app:latest
         ports:
-        - containerPort: 80
+        - containerPort: 8080
